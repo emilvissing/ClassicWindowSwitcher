@@ -490,15 +490,7 @@ static void _sws_WindowSwitcher_DrawContour(sws_WindowSwitcher* _this, HDC hdcPa
 sws_error_t sws_WindowSwitcher_RegisterHotkeys(sws_WindowSwitcher* _this, HKL hkl)
 {
     sws_error_t rv = SWS_ERROR_SUCCESS;
-
-    if (hkl)
-    {
-        _this->vkTilde = MapVirtualKeyExW(0x29, MAPVK_VSC_TO_VK_EX, hkl);
-    }
-    else
-    {
-        _this->vkTilde = MapVirtualKeyW(0x29, MAPVK_VSC_TO_VK_EX);
-    }
+    (void)hkl;
 
 
     /*if (!rv)
@@ -517,21 +509,7 @@ sws_error_t sws_WindowSwitcher_RegisterHotkeys(sws_WindowSwitcher* _this, HKL hk
     }
     if (!rv)
     {
-        if (!RegisterHotKey(_this->hWnd, -1, MOD_ALT, _this->vkTilde))
-        {
-            rv = sws_error_GetFromWin32Error(GetLastError());
-        }
-    }
-    if (!rv)
-    {
         if (!RegisterHotKey(_this->hWnd, 2, MOD_ALT | MOD_SHIFT, VK_TAB))
-        {
-            rv = sws_error_GetFromWin32Error(GetLastError());
-        }
-    }
-    if (!rv)
-    {
-        if (!RegisterHotKey(_this->hWnd, -2, MOD_ALT | MOD_SHIFT, _this->vkTilde))
         {
             rv = sws_error_GetFromWin32Error(GetLastError());
         }
@@ -545,21 +523,7 @@ sws_error_t sws_WindowSwitcher_RegisterHotkeys(sws_WindowSwitcher* _this, HKL hk
     }
     if (!rv)
     {
-        if (!RegisterHotKey(_this->hWnd, -3, MOD_ALT | MOD_CONTROL, _this->vkTilde))
-        {
-            rv = sws_error_GetFromWin32Error(GetLastError());
-        }
-    }
-    if (!rv)
-    {
         if (!RegisterHotKey(_this->hWnd, 4, MOD_ALT | MOD_SHIFT | MOD_CONTROL, VK_TAB))
-        {
-            rv = sws_error_GetFromWin32Error(GetLastError());
-        }
-    }
-    if (!rv)
-    {
-        if (!RegisterHotKey(_this->hWnd, -4, MOD_ALT | MOD_SHIFT | MOD_CONTROL, _this->vkTilde))
         {
             rv = sws_error_GetFromWin32Error(GetLastError());
         }
@@ -576,10 +540,6 @@ void sws_WindowSwitcher_UnregisterHotkeys(sws_WindowSwitcher* _this)
     UnregisterHotKey(_this->hWnd, 2);
     UnregisterHotKey(_this->hWnd, 3);
     UnregisterHotKey(_this->hWnd, 4);
-    UnregisterHotKey(_this->hWnd, -1);
-    UnregisterHotKey(_this->hWnd, -2);
-    UnregisterHotKey(_this->hWnd, -3);
-    UnregisterHotKey(_this->hWnd, -4);
 }
 
 void sws_WindowSwitcher_Paint(sws_WindowSwitcher* _this, DWORD dwFlags)
@@ -2098,7 +2058,7 @@ static LRESULT _sws_WindowsSwitcher_WndProc(HWND hWnd, UINT uMsg, WPARAM wParam,
     else if ((uMsg == WM_KEYUP && wParam == VK_MENU && !_this->bWasControl) ||
         ((uMsg == WM_KEYUP || uMsg == WM_SYSKEYUP) && wParam == VK_SPACE) ||
         ((uMsg == WM_KEYUP || uMsg == WM_SYSKEYUP) && wParam == VK_RETURN) ||
-        (uMsg == WM_KEYUP && wParam == (_this->mode == SWS_WINDOWSWITCHER_LAYOUTMODE_MINI ? _this->vkTilde : VK_TAB) && !(GetKeyState(VK_MENU) & 0x8000) && !_this->bWasControl))
+        (uMsg == WM_KEYUP && wParam == VK_TAB && !(GetKeyState(VK_MENU) & 0x8000) && !_this->bWasControl))
     {
         _sws_WindowSwitcher_SwitchToSelectedItemAndDismiss(_this);
         return 0;
@@ -2109,8 +2069,7 @@ static LRESULT _sws_WindowsSwitcher_WndProc(HWND hWnd, UINT uMsg, WPARAM wParam,
         {
             _this->bWasControl = TRUE;
         }
-        if (((uMsg == WM_KEYDOWN || uMsg == WM_SYSKEYDOWN) && wParam == _this->vkTilde) ||
-            ((uMsg == WM_KEYDOWN || uMsg == WM_SYSKEYDOWN) && wParam == VK_TAB) ||
+        if (((uMsg == WM_KEYDOWN || uMsg == WM_SYSKEYDOWN) && wParam == VK_TAB) ||
             (uMsg == WM_HOTKEY && (LOWORD(lParam) & MOD_ALT)) ||
             ((uMsg == WM_KEYDOWN || uMsg == WM_SYSKEYDOWN) && wParam == VK_LEFT) ||
             ((uMsg == WM_KEYDOWN || uMsg == WM_SYSKEYDOWN) && wParam == VK_RIGHT) ||
@@ -2121,18 +2080,7 @@ static LRESULT _sws_WindowsSwitcher_WndProc(HWND hWnd, UINT uMsg, WPARAM wParam,
         {
             if (!IsWindowVisible(_this->hWnd))
             {
-                if (uMsg == WM_HOTKEY && (int)wParam < 0)
-                {
-                    if (_this->bNoPerApplicationList)
-                    {
-                        return 0;
-                    }
-                    _this->mode = SWS_WINDOWSWITCHER_LAYOUTMODE_MINI;
-                }
-                else
-                {
-                    _this->mode = SWS_WINDOWSWITCHER_LAYOUTMODE_FULL;
-                }
+                _this->mode = SWS_WINDOWSWITCHER_LAYOUTMODE_FULL;
                 _sws_WindowSwitcher_Show(_this);
                 return 0;
             }
@@ -2144,18 +2092,7 @@ static LRESULT _sws_WindowsSwitcher_WndProc(HWND hWnd, UINT uMsg, WPARAM wParam,
 
                 RECT rcPrev = pWindowList[_this->layout.iIndex].rcWindow;
 
-                if ((((uMsg == WM_KEYDOWN || uMsg == WM_SYSKEYDOWN) && wParam == _this->vkTilde) ||
-                    (uMsg == WM_HOTKEY && ((int)wParam < 0))) &&
-                    _this->mode == SWS_WINDOWSWITCHER_LAYOUTMODE_FULL && pWindowList[_this->layout.iIndex].hWnd != _this->hWndWallpaper)
-                {
-                    HWND hFw = pWindowList[_this->layout.iIndex].hWnd;
-                    HWND hOwner = GetWindow(hFw, GW_OWNER);
-                    _this->lastMiniModehWnd = (hOwner && IsWindowVisible(hOwner)) ? hOwner : hFw;
-                    _this->mode = SWS_WINDOWSWITCHER_LAYOUTMODE_MINI;
-                    _sws_WindowSwitcher_Show(_this);
-                    return 0;
-                }
-                else if ((((uMsg == WM_KEYDOWN || uMsg == WM_SYSKEYDOWN) && wParam == VK_TAB) ||
+                if ((((uMsg == WM_KEYDOWN || uMsg == WM_SYSKEYDOWN) && wParam == VK_TAB) ||
                     (uMsg == WM_HOTKEY && ((int)wParam > 0))) &&
                     _this->mode == SWS_WINDOWSWITCHER_LAYOUTMODE_MINI)
                 {

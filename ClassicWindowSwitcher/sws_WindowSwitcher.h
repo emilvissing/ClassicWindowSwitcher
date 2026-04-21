@@ -55,7 +55,6 @@ typedef struct _sws_WindowSwitcher
     BOOL bPrimaryOnly;
     sws_IInputSwitchCallback InputSwitchCallback;
     sws_IInputSwitchControl* pInputSwitchControl;
-    UINT vkTilde;
     UINT dwOverrideMode;
     UINT opacity;
     HANDLE hShowThread;
